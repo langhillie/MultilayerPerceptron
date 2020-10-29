@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30406.217
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MachineLearning", "MachineLearning\MachineLearning.csproj", "{173BB49D-96AD-4EAB-8F19-C7C320F98232}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Linear Algebra", "Linear Algebra\Linear Algebra.csproj", "{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StanfordMachineLearning", "StanfordMachineLearning\StanfordMachineLearning.csproj", "{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{173BB49D-96AD-4EAB-8F19-C7C320F98232}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{173BB49D-96AD-4EAB-8F19-C7C320F98232}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{173BB49D-96AD-4EAB-8F19-C7C320F98232}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{173BB49D-96AD-4EAB-8F19-C7C320F98232}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {803DD64A-E3DF-41D2-848E-F8FA4B814933}
+	EndGlobalSection
+EndGlobal
