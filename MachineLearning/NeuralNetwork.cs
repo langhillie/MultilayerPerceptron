@@ -155,37 +155,55 @@ namespace MachineLearning
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
                         // Modify by Derivative of cost with respect to given weight
-                        // dC/dW = dZ/dW * dA/dZ * dC/dA
-                        double dCdW;
-                        double dCdA = 0;
-                        if (layer != layers.Length - 1)
-                        {
-                            // Hidden Layers
-                            // Equal to sum of weighted errors from layer above
-                            for (int i = 0; i < neurons[layer+1].Length; i++)
-                            {
-                                double weightedError = errors[layer + 1][i] * weights[layer + 1][i][neuron];
-                                dCdA += CostFunctionDerivative(neurons[layer][neuron], weightedError);
-                                errors[layer][neuron] += weightedError;
-                                
-                                // should stuff b here?
-                            }
-                        }
-                        else
-                        {
-                            // Output layer
-                            dCdA += CostFunctionDerivative(neurons[layer][neuron], errors[layer][neuron]);
-                        }
-
-                        double dAdZ = ActivationFunctionDerivative(errors[layer][neuron]);
-                        double dZdW = weights[layer][neuron][weight] * neurons[layer-1][weight];
-                        dCdW = dZdW * dAdZ * dCdA;
-                        //Console.WriteLine("dCdW = {0} * {1} * {2}", dCdA, dAdZ, dZdW);
+                        double dCdW = Calculate_dCdW(layer, neuron, weight);
                         weights[layer][neuron][weight] -= learningRate * dCdW;
+
                     }
                 }
             }
         }
+        // Calculates the cost with respect to a particular weight
+        private double Calculate_dCdW(int layer, int neuron, int weight)
+        {
+            // dZdW * dAdZ * dCdA;
+            double dZdW = Calculate_dZdW(layer, neuron, weight);
+            double dAdZ = Calculate_dAdZ(layer, neuron);
+            double dCdA = Calculate_dCdA(layer, neuron);
+            return dZdW * dAdZ * dCdA;
+        }
+        private double Calculate_dZdW(int layer, int neuron, int weight)
+        {
+            return weights[layer][neuron][weight] * neurons[layer - 1][weight];
+        }
+        private double Calculate_dAdZ(int layer, int neuron)
+        {
+            return ActivationFunctionDerivative(errors[layer][neuron]);
+        }
+
+        private double Calculate_dCdA(int layer, int neuron)
+        {
+            double dCdA = 0;
+            if (layer != layers.Length - 1)
+            {
+                // Hidden Layers
+                // Equal to sum of weighted errors from layer above
+                for (int i = 0; i < neurons[layer + 1].Length; i++)
+                {
+                    double weightedError = errors[layer + 1][i] * weights[layer + 1][i][neuron];
+                    dCdA += CostFunctionDerivative(neurons[layer][neuron], weightedError);
+                    errors[layer][neuron] += weightedError;
+
+                    // should stuff b here?
+                }
+            }
+            else
+            {
+                // Output layer
+                dCdA += CostFunctionDerivative(neurons[layer][neuron], errors[layer][neuron]);
+            }
+            return dCdA;
+        }
+
 
         private double[] CalculateErrors(double[] GeneratedOutput, double[] ExpectedOutput)
         {
