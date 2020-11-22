@@ -4,26 +4,29 @@ using System.Text;
 
 namespace MachineLearning
 {
-    // https://towardsdatascience.com/building-a-neural-network-framework-in-c-16ef56ce1fef
-    // Help gotten from here
-    // https://cs231n.github.io/
     class NeuralNetwork
     {
-        private int[] layers;
-        private double[][] neurons;    
-        private double[][] biases;    
-        private double[][][] weights;
-        private readonly double learningRate = 1;
+        public int[] layers;
+        public double[][] neurons;
+        public double[] biases;    
+        public double[][][] weights;
+        public double[][][] weightAdjustments;
+        private readonly double learningRate = 0.5;
 
-        private double[][] errors;
-        private double[] biasErrors;
+        private double[][] neuronErrors;
+        private double[][] weightErrors;
+
+        public double[] outputLayerErrors;
+        private double[][] dErr_dOut;
         public NeuralNetwork(int[] layerDimensions)
         {
             InitLayers(layerDimensions);
             InitNeurons();
             InitBiases();
             InitWeights();
+            InitWeightAdjustments();
             InitErrors();
+            InitDerivTable();
         }
 
         private void InitLayers(int[] layerDimensions)
@@ -52,12 +55,36 @@ namespace MachineLearning
 
                     for (int weight = 0; weight < numNeuronsPrevLayer; weight++)
                     {
-                        weights[layer][neuron][weight] = 2 * rand.NextDouble() - 1;
+                        weights[layer][neuron][weight] = 0.2 +  rand.NextDouble()* 0.6;
                     }
                 }
             }
         }
+        private void InitWeightAdjustments()
+        {
+            // Randomizing weights
+            Random rand = new Random();
+            weightAdjustments = new double[layers.Length][][];
 
+            // First layer of weights is not needed, becuase the weights refer to the layer before.
+            for (int layer = 1; layer < layers.Length; layer++)
+            {
+                weightAdjustments[layer] = new double[neurons[layer].Length][];
+                for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
+                {
+                    //Console.WriteLine("New Neuron " + neuron);
+                    // Number of weights for each neuron is equal to the number of neurons in the previous layer
+                    int numNeuronsPrevLayer = neurons[layer - 1].Length;
+                    //Console.WriteLine("Layer {0}, NumWeights {1}", layer, numNeuronsPrevLayer);
+                    weightAdjustments[layer][neuron] = new double[numNeuronsPrevLayer];
+
+                    for (int weight = 0; weight < numNeuronsPrevLayer; weight++)
+                    {
+                        weightAdjustments[layer][neuron][weight] = 2 * rand.NextDouble() - 1;
+                    }
+                }
+            }
+        }
         private void InitNeurons()
         {
             neurons = new double[layers.Length][];
@@ -69,37 +96,45 @@ namespace MachineLearning
         private void InitBiases()
         {
             Random rand = new Random();
-
-            biases = new double[layers.Length][];
-            for (int layer = 0; layer < layers.Length; layer++)
+            biases = new double[layers.Length];
+            // Layer 0 would be biases for the input layer, which does not have biases
+            for (int layer = 1; layer < layers.Length; layer++)
             {
-                biases[layer] = new double[layers[layer]];
-                for (int neuron = 0; neuron < layers[layer]; neuron++)
-                {
-                    biases[layer][neuron] = rand.NextDouble() - 0.5;
-                }
+                biases[layer] =  rand.NextDouble() - 0.5;
             }
         }
         private void InitErrors()
         {
-            errors = new double[layers.Length][];
-            biasErrors = new double[layers.Length];
+            outputLayerErrors = new double[layers[layers.Length - 1]];
+
+            neuronErrors = new double[layers.Length][];
+            for (int i = 0; i < layers.Length; i++)
+            {
+                neuronErrors[i] = new double[neurons[i].Length];
+            }
+        }
+        private void InitDerivTable()
+        {
+            dErr_dOut = new double[layers.Length][];
             for (int layer = 0; layer < layers.Length; layer++)
             {
-                biasErrors[layer] = 0;
-                errors[layer] = new double[layers[layer]];
+                dErr_dOut[layer] = new double[layers[layer]];
                 for (int neuron = 0; neuron < layers[layer]; neuron++)
                 {
-                    errors[layer][neuron] = 0;
+                    dErr_dOut[layer][neuron] = 0;
                 }
             }
         }
-        public double[] GetFeedForwardOutput(double[] inputs)
+        public double[] FeedForward(double[] input, bool debug = false)
         {
             // Setting first layer to input values
-            for (int i = 0; i < inputs.Length; i++)
+            neurons[0] = input;
+            if (debug)
             {
-                neurons[0][i] = inputs[i];
+                for (int i = 0; i < 784; i++)
+                {
+                    Console.Write(neurons[0][i] + " ");
+                }
             }
 
             // Hidden + output Layers
@@ -111,127 +146,199 @@ namespace MachineLearning
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
                         sum += neurons[layer - 1][weight] * weights[layer][neuron][weight];
+                        //Console.WriteLine(neurons[layer - 1][weight] + " * " + weights[layer][neuron][weight]);
                     }
-                    //sum += biases[layer][neuron];
+                    sum += biases[layer];
                     neurons[layer][neuron] = ActivationFunction(sum);
+                    if (debug)
+                        Console.WriteLine("Neuron in layer " + layer + " neuron " + neuron + ": " + neurons[layer][neuron]);
                 }
             }
             return neurons[neurons.Length - 1];
         }
-
-        public void TrainEpoch(double[] input, double desiredOutput)
+        public void TrainEpoch(double[] input, double[] desiredOutput)
         {
             double[][] inputs = new double[1][];
             inputs[0] = input;
-            double[] desiredOutputs = new double[1];
+            double[][] desiredOutputs = new double[1][];
             desiredOutputs[0] = desiredOutput;
-            TrainBatch(inputs, desiredOutputs);
+            Train(inputs, desiredOutputs);
         }
-
-        public void TrainBatch(double[][] inputs, double[] desiredOutputs)
+        // Takes in an array of input arrays, and the corresponding desired output arrays for each input
+        public void Train(double[][] inputs, double[][] desiredOutputs)
         {
-            double[][] output = new double[inputs.GetLength(0)][];
+            double[] outputAverage = new double[neurons[layers.Length - 1].Length];
+            double[] targetAverage = new double[neurons[layers.Length - 1].Length];
 
-            for (int i = 0; i < inputs.GetLength(0); i++)
+            for (int input = 0; input < inputs.GetLength(0); input++)
             {
-                output[i] = GetFeedForwardOutput(inputs[i]);
-                double[] cost = CalculateErrors(output[i], VectorHelper.OutputToVector(desiredOutputs[i]));
-                for (int j = 0; j < layers[layers.Length-1]; j++)
+                double[] output = FeedForward(inputs[input]);
+                for (int j = 0; j < output.Length; j++)
                 {
-                    errors[layers.Length - 1][j] += cost[j];
+                    outputAverage[j] += output[j];
+                    targetAverage[j] += desiredOutputs[input][j];
                 }
             }
-            for (int j = 0; j < layers[layers.Length - 1]; j++)
+
+            for (int i = 0; i < outputAverage.Length; i++)
             {
-                // Setting the error for the output layer
-                errors[layers.Length - 1][j] /= inputs.GetLength(0);
-                //Console.WriteLine(j + " error| " + errors[layers.Length - 1][j]);
+                outputAverage[i] /= inputs.GetLength(0);
+                targetAverage[i] /= inputs.GetLength(0);
             }
-            
-            for (int layer = layers.Length - 1; layer > 0; layer--)
+            Backpropagate(outputAverage, targetAverage);
+        }
+
+        public double[] CalculateError(double[] feedForwardOutput, double[] desiredOutputs)
+        {
+            double[] cost = new double[feedForwardOutput.Length];
+            for (int i = 0; i < feedForwardOutput.Length; i++)
+            {
+                cost[i] = CostFunction(feedForwardOutput[i], desiredOutputs[i]);
+            }
+            outputLayerErrors = cost;
+            return cost;
+        }
+        public double SumTotalError(double[] errors)
+        {
+            double sum = 0;
+            for (int i = 0; i < errors.Length; i++)
+            {
+                sum += errors[i];
+            }
+            return sum;
+        }
+        private void CalculateNeuronErrors(double[] GeneratedOutput, double[] TargetOutput)
+        {
+            for (int i = 0; i < neurons[layers.Length - 1].Length; i++)
+            {
+                neuronErrors[layers.Length - 1][i] = (TargetOutput[i] - GeneratedOutput[i]) * GeneratedOutput[i] * (1 - GeneratedOutput[i]);
+            }
+            for (int layer = layers.Length - 2; layer > 0; layer--)
+            {
+                for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
+                {
+                    double sum = 0;
+                    // Each connection to neuron in next layer
+                    for (int weight = 0; weight < neurons[layer + 1].Length; weight++)
+                    {
+                        sum += (neuronErrors[layer + 1][weight] * weights[layer + 1][weight][neuron]) *
+                            neurons[layer][neuron] * (1 - neurons[layer][neuron]);
+                    }
+                    neuronErrors[layer][neuron] = sum;
+                }
+            }
+        }
+        private double CostFunction(double GeneratedOutput, double TargetOutput)
+        {
+            return Math.Pow(TargetOutput - GeneratedOutput, 2) / 2;
+        }
+        private void Backpropagate(double[] GeneratedOutput, double[] TargetOutput)
+        {
+            outputLayerErrors = CalculateError(GeneratedOutput, TargetOutput);
+            double totalError = SumTotalError(outputLayerErrors);
+            //Console.WriteLine("Total Error: " + totalError);
+
+            //CalculateNeuronErrors(GeneratedOutput, TargetOutput);
+
+            CalculateOutputLayerWeightErrors(GeneratedOutput, TargetOutput);
+            CalculateHiddenLayerWeightErrors();
+            UpdateWeights();
+        }
+        public void CalculateOutputLayerWeightErrors(double[] GeneratedOutput, double[] TargetOutput)
+        {
+            int outputLayer = layers.Length - 1;
+            for (int neuron = 0; neuron < neurons[outputLayer].Length; neuron++)
+            {
+                double dAdZ = ActivationFunctionDerivative(GeneratedOutput[neuron]);
+                double dCdA = CostFunctionDerivative(GeneratedOutput[neuron], TargetOutput[neuron]);
+                dErr_dOut[outputLayer][neuron] = dAdZ * dCdA;
+
+                for (int weight = 0; weight < weights[outputLayer][neuron].Length; weight++)
+                {
+                    double dZdW = neurons[outputLayer - 1][weight];
+                    weightAdjustments[outputLayer][neuron][weight] = dZdW * dAdZ * dCdA;
+                }
+            }
+        }
+        private void CalculateHiddenLayerWeightErrors()
+        {
+            // Hidden Layers
+            for (int layer = layers.Length - 2; layer > 0; layer--)
+            {
+                for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
+                {
+                    double dAdZ = Calculate_dAdZ(layer, neuron);
+                    double dCdA = Calculate_dCdA(layer, neuron);
+                    dErr_dOut[layer][neuron] = dCdA * dAdZ;
+                    for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
+                    {
+                        // Modify by Derivative of cost with respect to given weight
+                        double dZdW = Calculate_dZdW(layer, neuron, weight);
+                        weightAdjustments[layer][neuron][weight] = dZdW * dAdZ * dCdA;
+                        Console.WriteLine("Adjustment {0} {1} {2}: {3:0.00000}", layer, neuron, weight, weightAdjustments[layer][neuron][weight]);
+
+                    }
+                }
+            }
+        }
+        private void UpdateWeights()
+        {
+            for (int layer = 1; layer < layers.Length; layer++)
             {
                 for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
                 {
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
-                        // Modify by Derivative of cost with respect to given weight
-                        double dCdW = Calculate_dCdW(layer, neuron, weight);
-                        weights[layer][neuron][weight] -= learningRate * dCdW;
-
+                        weights[layer][neuron][weight] -= weightAdjustments[layer][neuron][weight] * learningRate;
+                        Console.WriteLine("Adjustment {0} {1} {2}: {3:0.00000}", layer, neuron, weight, weightAdjustments[layer][neuron][weight]);
                     }
                 }
             }
         }
-        // Calculates the cost with respect to a particular weight
-        private double Calculate_dCdW(int layer, int neuron, int weight)
+        public double Calculate_dZdW(int layer, int neuron, int weight)
         {
-            // dZdW * dAdZ * dCdA;
-            double dZdW = Calculate_dZdW(layer, neuron, weight);
-            double dAdZ = Calculate_dAdZ(layer, neuron);
-            double dCdA = Calculate_dCdA(layer, neuron);
-            return dZdW * dAdZ * dCdA;
+            //Console.WriteLine("dNet/dw = " + neurons[layer - 1][weight]);
+            return neurons[layer - 1][weight];
         }
-        private double Calculate_dZdW(int layer, int neuron, int weight)
+        public double Calculate_dAdZ(int layer, int neuron)
         {
-            return weights[layer][neuron][weight] * neurons[layer - 1][weight];
+            //Console.WriteLine("dOut/dNet = " + ActivationFunctionDerivative(neurons[layer][neuron]));
+            return ActivationFunctionDerivative(neurons[layer][neuron]);
         }
-        private double Calculate_dAdZ(int layer, int neuron)
+        public double Calculate_dCdA(int layer, int neuron)
         {
-            return ActivationFunctionDerivative(errors[layer][neuron]);
-        }
-
-        private double Calculate_dCdA(int layer, int neuron)
-        {
+            // Equal to sum of weighted errors from layer above
             double dCdA = 0;
-            if (layer != layers.Length - 1)
+            for (int i = 0; i < neurons[layer + 1].Length; i++)
             {
-                // Hidden Layers
-                // Equal to sum of weighted errors from layer above
-                for (int i = 0; i < neurons[layer + 1].Length; i++)
-                {
-                    double weightedError = errors[layer + 1][i] * weights[layer + 1][i][neuron];
-                    dCdA += CostFunctionDerivative(neurons[layer][neuron], weightedError);
-                    errors[layer][neuron] += weightedError;
-
-                    // should stuff b here?
-                }
-            }
-            else
-            {
-                // Output layer
-                dCdA += CostFunctionDerivative(neurons[layer][neuron], errors[layer][neuron]);
+                double weightedError = dErr_dOut[layer + 1][i] * weights[layer + 1][i][neuron];
+                dCdA += CostFunctionDerivative(neurons[layer][neuron], weightedError);
             }
             return dCdA;
         }
-
-
-        private double[] CalculateErrors(double[] GeneratedOutput, double[] ExpectedOutput)
+        private double CostFunctionDerivative(double GeneratedOutput, double TargetOutput)
         {
-            double[] cost = new double[GeneratedOutput.Length];
-            for (int i = 0; i < GeneratedOutput.Length; i++)
-            {
-                cost[i] = CostFunction(GeneratedOutput[i], ExpectedOutput[i]);
-            }
-            return cost;
+            return -(TargetOutput - GeneratedOutput);
         }
-        private double CostFunction(double GeneratedOutput, double ExpectedOutput)
-        {
-            return Math.Pow(GeneratedOutput - ExpectedOutput, 2) / 2;
-        }
-
-        private double CostFunctionDerivative(double GeneratedOutput, double ExpectedOutput)
-        {
-            return (ExpectedOutput - GeneratedOutput);
-        }
-
         public double ActivationFunction(double x)
         {
-            return LogSigmoid(x);
+            //return LogSigmoid(x);
+            // logistic function
+            //return 1 / (1 + Math.Pow(Math.E, 0 - x));
+            return Math.Max(0, x);
         }
-
         public double ActivationFunctionDerivative(double x)
         {
-            return LogSigmoid(x) * (1 - LogSigmoid(x));
+            if (x > 0)
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+            //return x * (1 - x);
+            //return LogSigmoid(x) * (1 - LogSigmoid(x));
         }
         private double LogSigmoid(double x)
         {
