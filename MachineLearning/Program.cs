@@ -65,18 +65,32 @@ namespace MachineLearning
 
             WriteWeightsTest();
         }
+        static void testMissingLink()
+        {
+            outputLayerSize = 2;
+            int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
+            neuralnetwork = new NeuralNetwork(layerDimensions);
+            neuralnetwork.weights[1][0] = new[] { 0.15, 0.20 };
+            neuralnetwork.weights[1][1] = new[] { 0.57, 0.30 };
+            neuralnetwork.biases[1] = 0.4;
+            neuralnetwork.weights[2][0] = new[] { 0.40, 0.45 };
+            neuralnetwork.weights[2][1] = new[] { 0.50, 0.55 };
+            neuralnetwork.biases[2] = 0.60;
+
+            double[] trainingData = new[] { 0.1, 0.20 };
+            double[] trainingLabels = new[] { 0.5, 0.5 };
+
+            //neuralnetwork.TrainEpoch(trainingData, trainingLabels);
+            double[] output = neuralnetwork.FeedForward(trainingData);
+        }
         static void testXor()
         {
             outputLayerSize = 1;
             int[] layerDimensions = new int[] { 2, 3, outputLayerSize };
             neuralnetwork = new NeuralNetwork(layerDimensions);
-            neuralnetwork.weights[1][0] = new[] { -0.34696199, -0.99197856 };
-            neuralnetwork.weights[1][1] = new[] { 0.98794618, 0.40180522 };
-            neuralnetwork.weights[1][2] = new[] { 0.23721831, 0.83737533 };
             neuralnetwork.biases[1] = 0;
-            neuralnetwork.weights[2][0] = new[] { 0.7455474, -0.50254777, 0.86429779 };
             neuralnetwork.biases[2] = 0;
-            /* 
+
             double[][] trainingData = new double[][]
             {
                 new double[] { 1, 1},
@@ -91,11 +105,59 @@ namespace MachineLearning
                 new double[] { 1 },
                 new double[] { 0 }
             };
-            double[] output = neuralnetwork.FeedForward(trainingData[0]);
-            Console.WriteLine("a 31: " + output[0]);
-            neuralnetwork.TrainEpoch(trainingData[0], trainingLabels[0]);
-            */
+
+            //WriteWeights();
+            for (int j = 0; j < 1; j++)
+            {
+                for (int i = 0; i < 1; i++)
+                {
+                    neuralnetwork.TrainEpoch(trainingData[i], trainingLabels[i]);
+                }
+            }
+            Console.WriteLine();
+            neuralnetwork.TrainEpoch(trainingData[1], trainingLabels[1]);
+            Console.WriteLine();
+            neuralnetwork.TrainEpoch(trainingData[3], trainingLabels[3]);
+
+
+            //TestOne(trainingData[1], trainingLabels[1]);
             //neuralnetwork.TrainEpoch(trainingData, trainingLabels);
+
+        }
+        static void testSingleLayer()
+        {
+            outputLayerSize = 1;
+            int[] layerDimensions = new int[] { 2, outputLayerSize };
+            neuralnetwork = new NeuralNetwork(layerDimensions);
+            neuralnetwork.biases[1] = 0;
+            //neuralnetwork.biases[2] = 0;
+
+            double[][] trainingData = new double[][]
+            {
+                new double[] { 1, 1},
+                new double[] { 0, 1},
+                new double[] { 1, 1},
+                new double[] { 0, 0},
+            };
+            double[][] trainingLabels = new double[][]
+            {
+                new double[] { 1 },
+                new double[] { 0 },
+                new double[] { 1 },
+                new double[] { 0 }
+            };
+            neuralnetwork.TrainEpoch(trainingData[0], trainingLabels[0]);
+            Console.WriteLine();
+            neuralnetwork.TrainEpoch(trainingData[1], trainingLabels[1]);
+            Console.WriteLine();
+            neuralnetwork.TrainEpoch(trainingData[2], trainingLabels[2]);
+            for (int i = 0; i < 100; i++)
+            {
+                neuralnetwork.TrainEpoch(trainingData[i % 4], trainingLabels[i % 4]);
+            }
+
+            //neuralnetwork.TrainEpoch(trainingData[1], trainingLabels[1]);
+            WriteWeights();
 
         }
         static void WriteWeightsTest()
@@ -156,7 +218,6 @@ namespace MachineLearning
             //TestOne(testData[0], testLabels[0]);
             //Console.WriteLine("Layers: " + neuralnetwork.layers.Length);
             //WriteWeights();
-            
         }
         static void WriteWeights()
         {
@@ -182,7 +243,7 @@ namespace MachineLearning
             Console.WriteLine("TESTING");
             //DrawNumber(data);
             double[] output = neuralnetwork.FeedForward(data);
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < label.Length; i++)
             {
                 Console.WriteLine("Expected: {0} Actual: {1:0.000000}", label[i], output[i]);
             }
@@ -201,33 +262,14 @@ namespace MachineLearning
             Console.WriteLine("Average error: " + ErrorSum);
         }
 
-        static void TestUcal()
-        {
-            outputLayerSize = 1;
-            int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions);
-            neuralnetwork.weights[1][0] = new double[] { 0.11, 0.21 };
-            neuralnetwork.weights[1][1] = new double[] { 0.12, 0.08 };
-            neuralnetwork.biases[1] = 0;
-            neuralnetwork.weights[2][0] = new double[] { 0.14, 0.15 };
-            neuralnetwork.biases[2] = 0;
-
-            double[] trainingData = new double[] { 2, 3 };
-            double[] trainingLabels = new double[] { 1 };
-
-            //neuralnetwork.TrainEpoch(trainingData, trainingLabels);
-            double[] output = neuralnetwork.FeedForward(trainingData);
-            Console.WriteLine("OUT: " + output[0]);
-            neuralnetwork.TrainEpoch(trainingData, trainingLabels);
-            //WriteWeights();
-
-        }
+        
         static void Main(string[] args)
         {
             //RunNumberRecognition();
             //test();
             //testXor();
-            TestUcal();
+            //testMissingLink();
+            testSingleLayer();
         }
         private static double[][] GenerateXorData()
         {
@@ -298,6 +340,8 @@ namespace MachineLearning
                     for (int col = 0; col < imageColumns; col++)
                     {
                         data[i][row * imageColumns + col] = reader.ReadByte();
+                        // normalizing data between 0 and 1
+                        data[i][row * imageColumns + col] /= (imageColumns * imageRows);
                         //Console.Write(String.Format("{0, -3}", data[i][row * imageColumns + col]));
                     }
                     //Console.WriteLine();
