@@ -9,87 +9,19 @@ namespace MachineLearning
         static int outputLayerSize;
         static NeuralNetwork neuralnetwork;
 
-        static void test()
+        static void Main(string[] args)
         {
-            outputLayerSize = 2;
-            int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions);
-            neuralnetwork.weights[1][0] = new[] { 0.15, 0.20 };
-            neuralnetwork.weights[1][1] = new[] { 0.25, 0.30 };
-            neuralnetwork.biases[1] = 0.35;
-            neuralnetwork.weights[2][0] = new[] { 0.40, 0.45 };
-            neuralnetwork.weights[2][1] = new[] { 0.50, 0.55 };
-            neuralnetwork.biases[2] = 0.60;
-
-            double[] trainingData = new[] { 0.05, 0.10 };
-            double[] trainingLabels = new[] { 0.01, 0.99 };
-
-            //neuralnetwork.TrainEpoch(trainingData, trainingLabels);
-            double[] output = neuralnetwork.FeedForward(trainingData);
-            Console.WriteLine("Neuron H1: " + neuralnetwork.neurons[1][0]); // 0.15 * 0.05 + 0.20 * 0.10 + 0.35
-            Console.WriteLine("Neuron H2: " + neuralnetwork.neurons[1][1]); // 0.25 * 0.05 + 0.30 * 0.10 + 0.35
-
-            Console.WriteLine("Neuron o1: " + neuralnetwork.neurons[2][0]); 
-            Console.WriteLine("Neuron o2: " + neuralnetwork.neurons[2][1]);
-
-            //WriteWeightsTest();
-
-            Console.WriteLine();
-
-            // FeedForward working properly
-            // Now we check errors
-            double[] error = neuralnetwork.CalculateError(output, trainingLabels);
-            double totalError = neuralnetwork.SumTotalError(error);
-            Console.WriteLine("Eo1: {0}, Eo2: {1}", error[0], error[1]);
-            Console.WriteLine("Total Error: " + totalError);
-
-            Console.WriteLine();
-            /*
-            Console.WriteLine("dError / dOut = " + neuralnetwork.Calculate_dCdA(neuralnetwork.neurons[2][0], trainingLabels[0]));
-            Console.WriteLine("dOut / dNet = " + neuralnetwork.Calculate_dAdZ(neuralnetwork.neurons[2][0]));
-            Console.WriteLine("dNet / dWeight = " + neuralnetwork.Calculate_dAdZ(neuralnetwork.neurons[1][0]));
-            */
-            /*
-            WriteWeightsTest();
-            neuralnetwork.AdjustOutputLayerWeights(output, trainingLabels);
-            WriteWeightsTest();
-            */
-            /*
-            Console.WriteLine();
-            for (int i = 0; i < neuralnetwork.errors[2].Length; i++)
-            {
-                Console.WriteLine("E" + i + " = " + neuralnetwork.errors[2][i]);
-            }
-            */
-            neuralnetwork.TrainEpoch(trainingData, trainingLabels);
-
-            WriteWeightsTest();
-        }
-        static void testMissingLink()
-        {
-            outputLayerSize = 2;
-            int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions);
-            neuralnetwork.weights[1][0] = new[] { 0.15, 0.20 };
-            neuralnetwork.weights[1][1] = new[] { 0.57, 0.30 };
-            neuralnetwork.biases[1] = 0.4;
-            neuralnetwork.weights[2][0] = new[] { 0.40, 0.45 };
-            neuralnetwork.weights[2][1] = new[] { 0.50, 0.55 };
-            neuralnetwork.biases[2] = 0.60;
-
-            double[] trainingData = new[] { 0.1, 0.20 };
-            double[] trainingLabels = new[] { 0.5, 0.5 };
-
-            //neuralnetwork.TrainEpoch(trainingData, trainingLabels);
-            double[] output = neuralnetwork.FeedForward(trainingData);
+            //RunNumberRecognition();
+            testXor();
+            //testSingleLayer();
         }
         static void testXor()
         {
             outputLayerSize = 1;
             int[] layerDimensions = new int[] { 2, 3, outputLayerSize };
             neuralnetwork = new NeuralNetwork(layerDimensions);
-            neuralnetwork.biases[1] = 0;
-            neuralnetwork.biases[2] = 0;
+            neuralnetwork.biases[1] = new double[] { 0, 0, 0 };
+            neuralnetwork.biases[2] = new double[] { 0 };
 
             double[][] trainingData = new double[][]
             {
@@ -105,11 +37,12 @@ namespace MachineLearning
                 new double[] { 1 },
                 new double[] { 0 }
             };
+            TestData(trainingData, trainingLabels);
 
             //WriteWeights();
-            for (int j = 0; j < 1; j++)
+            for (int j = 0; j < 50; j++)
             {
-                for (int i = 0; i < 1; i++)
+                for (int i = 0; i < 4; i++)
                 {
                     neuralnetwork.TrainEpoch(trainingData[i], trainingLabels[i]);
                 }
@@ -119,18 +52,22 @@ namespace MachineLearning
             Console.WriteLine();
             neuralnetwork.TrainEpoch(trainingData[3], trainingLabels[3]);
 
+            TestOne(trainingData[0], trainingLabels[0]);
+            TestOne(trainingData[1], trainingLabels[1]);
+            TestOne(trainingData[2], trainingLabels[2]);
+            TestOne(trainingData[3], trainingLabels[3]);
 
-            //TestOne(trainingData[1], trainingLabels[1]);
-            //neuralnetwork.TrainEpoch(trainingData, trainingLabels);
-
+            TestData(trainingData, trainingLabels);
         }
         static void testSingleLayer()
         {
             outputLayerSize = 1;
-            int[] layerDimensions = new int[] { 2, outputLayerSize };
+            int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
             neuralnetwork = new NeuralNetwork(layerDimensions);
-            neuralnetwork.biases[1] = 0;
-            //neuralnetwork.biases[2] = 0;
+            neuralnetwork.biases[1][0] = 0;
+            neuralnetwork.biases[1][1] = 0;
+            neuralnetwork.biases[2][0] = 0;
+            neuralnetwork.biases[2][1] = 0;
 
             double[][] trainingData = new double[][]
             {
@@ -146,19 +83,20 @@ namespace MachineLearning
                 new double[] { 1 },
                 new double[] { 0 }
             };
+
+            for (int i = 0; i < 1000; i++)
+            {
+                neuralnetwork.TrainEpoch(trainingData[i % 4], trainingLabels[i % 4]);
+            }
+
+
             neuralnetwork.TrainEpoch(trainingData[0], trainingLabels[0]);
             Console.WriteLine();
             neuralnetwork.TrainEpoch(trainingData[1], trainingLabels[1]);
             Console.WriteLine();
             neuralnetwork.TrainEpoch(trainingData[2], trainingLabels[2]);
-            for (int i = 0; i < 100; i++)
-            {
-                neuralnetwork.TrainEpoch(trainingData[i % 4], trainingLabels[i % 4]);
-            }
 
-            //neuralnetwork.TrainEpoch(trainingData[1], trainingLabels[1]);
             WriteWeights();
-
         }
         static void WriteWeightsTest()
         {
@@ -189,35 +127,21 @@ namespace MachineLearning
                 Console.Write(testLabels[0][i]);
             }
             Console.WriteLine();
-            //             int[] layerDimensions = new int[] { 784, 16, 16, outputLayerSize };
 
             int[] layerDimensions = new int[] { 784, 16, 16, outputLayerSize };
             neuralnetwork = new NeuralNetwork(layerDimensions);
 
             TestData(testData, testLabels);
             TestOne(testData[1], testLabels[1]);
-            /*
+
             for (int i = 0; i < trainingData.GetLength(0); i++)
             {
                 neuralnetwork.TrainEpoch(trainingData[i], trainingLabels[i]);
             }
-            */
-            
-            for (int i = 0; i < 1; i++) // 1875
-            {
-                double[][] batch = new double[32][];
-                double[][] batchLabels = new double[32][];
-                Array.Copy(trainingData, i * batch.GetLength(0), batch, 0, batch.GetLength(0));
-                Array.Copy(trainingLabels, i * batchLabels.GetLength(0), batchLabels, 0, batchLabels.GetLength(0));
-                neuralnetwork.Train(batch, batchLabels);
-            }
-            
+
             TestData(testData, testLabels);
 
             TestOne(testData[1], testLabels[1]);
-            //TestOne(testData[0], testLabels[0]);
-            //Console.WriteLine("Layers: " + neuralnetwork.layers.Length);
-            //WriteWeights();
         }
         static void WriteWeights()
         {
@@ -237,7 +161,6 @@ namespace MachineLearning
                 }
             }
         }
-
         static void TestOne(double[] data, double[] label)
         {
             Console.WriteLine("TESTING");
@@ -248,7 +171,6 @@ namespace MachineLearning
                 Console.WriteLine("Expected: {0} Actual: {1:0.000000}", label[i], output[i]);
             }
         }
-
         static void TestData(double[][] TestData, double[][] TestLabels)
         {
             double ErrorSum = 0;
@@ -259,17 +181,7 @@ namespace MachineLearning
                 ErrorSum += neuralnetwork.SumTotalError(errors);
             }
             ErrorSum /= TestData.GetLength(0);
-            Console.WriteLine("Average error: " + ErrorSum);
-        }
-
-        
-        static void Main(string[] args)
-        {
-            //RunNumberRecognition();
-            //test();
-            //testXor();
-            //testMissingLink();
-            testSingleLayer();
+            Console.WriteLine("Average error: {0:0.000}",ErrorSum);
         }
         private static double[][] GenerateXorData()
         {
@@ -342,11 +254,8 @@ namespace MachineLearning
                         data[i][row * imageColumns + col] = reader.ReadByte();
                         // normalizing data between 0 and 1
                         data[i][row * imageColumns + col] /= (imageColumns * imageRows);
-                        //Console.Write(String.Format("{0, -3}", data[i][row * imageColumns + col]));
                     }
-                    //Console.WriteLine();
                 }
-                //Console.WriteLine(i);
             }
             
             return data;
@@ -358,7 +267,6 @@ namespace MachineLearning
                 for (int col = 0; col < columns; col++)
                 {
                     double pixelValue = img[row * columns + col];
-                    //Console.Write(pixelValue);
                     
                     if (pixelValue > 200)
                     {

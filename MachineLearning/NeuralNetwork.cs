@@ -8,7 +8,7 @@ namespace MachineLearning
     {
         public int[] layers;
         public double[][] neurons;
-        public double[] biases;    
+        public double[][] biases;    
         public double[][][] weights;
         public double[][][] gradient;
         private readonly double learningRate = 0.5;
@@ -29,7 +29,6 @@ namespace MachineLearning
             layers = new int[layerDimensions.Length];
             Array.Copy(layerDimensions, layers, layerDimensions.Length);
         }
-
         private void InitWeights()
         {
             // Randomizing weights
@@ -90,11 +89,15 @@ namespace MachineLearning
         private void InitBiases()
         {
             Random rand = new Random();
-            biases = new double[layers.Length];
+            biases = new double[layers.Length][];
             // Layer 0 would be biases for the input layer, which does not have biases
             for (int layer = 1; layer < layers.Length; layer++)
             {
-                biases[layer] =  rand.NextDouble() / neurons[layer - 1].Length;
+                biases[layer] = new double[neurons[layer].Length];
+                for (int neuron = 0; neuron < biases[layer].Length; neuron++)
+                {
+                    biases[layer][neuron] = rand.NextDouble() / neurons[layer - 1].Length;
+                }
             }
         }
         private void InitDerivTable()
@@ -114,7 +117,6 @@ namespace MachineLearning
             // Setting first layer to input values
             neurons[0] = input;
 
-            // Hidden + output Layers
             for (int layer = 1; layer < layers.Length; layer++)
             {
                 for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
@@ -123,9 +125,8 @@ namespace MachineLearning
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
                         sum += neurons[layer - 1][weight] * weights[layer][neuron][weight];
-                        //Console.WriteLine(neurons[layer - 1][weight] + " * " + weights[layer][neuron][weight]);
                     }
-                    sum += biases[layer];
+                    sum += biases[layer][neuron];
                     neurons[layer][neuron] = ActivationFunction(sum);
                 }
             }
@@ -155,7 +156,7 @@ namespace MachineLearning
                 double[] output = FeedForward(inputs[input]);
                 for (int j = 0; j < output.Length; j++)
                 {
-                    Console.WriteLine("Output {0:0.000} desired {1}", output[j], desiredOutputs[input][j]);
+                    //Console.WriteLine("Output {0:0.000} desired {1}", output[j], desiredOutputs[input][j]);
                     outputAverage[j] += output[j];
                     targetAverage[j] += desiredOutputs[input][j];
                 }
@@ -214,7 +215,6 @@ namespace MachineLearning
                 double dAdZ = ActivationFunctionDerivative(GeneratedOutput[neuron]);
                 double dCdA = CostFunctionDerivative(GeneratedOutput[neuron], TargetOutput[neuron]);
                 error[outputLayer][neuron] = dAdZ * dCdA;
-
                 for (int weight = 0; weight < weights[outputLayer][neuron].Length; weight++)
                 {
                     double dZdW = neurons[outputLayer - 1][weight];
@@ -224,7 +224,6 @@ namespace MachineLearning
         }
         private void CalculateHiddenLayerWeightErrors()
         {
-            // Hidden Layers
             for (int layer = layers.Length - 2; layer > 0; layer--)
             {
                 for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
@@ -236,16 +235,7 @@ namespace MachineLearning
                     {
                         // Modify by Derivative of cost with respect to given weight
                         double dZdW = Calculate_dZdW(layer, neuron, weight);
-                        
                         gradient[layer][neuron][weight] = dZdW * error[layer][neuron];
-                        Console.WriteLine("Gradient {0} {1} {2} : {3} * {4}", layer, neuron, weight, dZdW, error[layer][neuron]);
-
-                        /*
-                        if (weight % 8 == 0)
-                        {
-                            Console.WriteLine("Adjustment {0} {1} {2} = {3:0.00} {4:0.00} {5:0.00}", layer, neuron, weight, dZdW, dAdZ, dCdA);
-                        }
-                        */
                     }
                 }
             }
@@ -258,16 +248,13 @@ namespace MachineLearning
                 {
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
-                        Console.WriteLine("Update {0} {1} {2}: {3} * lrn rate", layer, neuron, weight, -gradient[layer][neuron][weight]);
                         weights[layer][neuron][weight] -= gradient[layer][neuron][weight] * learningRate;
-                        //Console.WriteLine("Adjustment {0} {1} {2}: {3:0.00000}", layer, neuron, weight, weightAdjustments[layer][neuron][weight]);
                     }
                 }
             }
         }
         public double Calculate_dZdW(int layer, int neuron, int weight)
         {
-            //Console.WriteLine("dNet/dw = " + neurons[layer - 1][weight]);
             return neurons[layer - 1][weight];
         }
         public double Calculate_dAdZ(int layer, int neuron)
@@ -277,13 +264,11 @@ namespace MachineLearning
         }
         public double Calculate_dCdA(int layer, int neuron)
         {
-            // Equal to sum of weighted errors from layer above
             double dCdA = 0;
             for (int weight = 0; weight < neurons[layer + 1].Length; weight++)
             {
                 dCdA += error[layer + 1][weight] * weights[layer + 1][weight][neuron];
             }
-            //Console.WriteLine("DCDA = " + dCdA);
             return dCdA;
         }
         private double CostFunctionDerivative(double GeneratedOutput, double TargetOutput)
@@ -292,13 +277,11 @@ namespace MachineLearning
         }
         public double ActivationFunction(double x)
         {
-            // logistic function
             //return 1 / (1 + Math.Pow(Math.E, -x));
             return Math.Max(0.01*x, x);
         }
         public double ActivationFunctionDerivative(double x)
         {
-            //Console.WriteLine("x: " + x);
             //return x * (1 - x);
             if (x > 0)
             {
