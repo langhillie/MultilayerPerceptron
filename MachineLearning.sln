@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MachineLearning", "MachineL
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Linear Algebra", "Linear Algebra\Linear Algebra.csproj", "{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StanfordMachineLearning", "StanfordMachineLearning\StanfordMachineLearning.csproj", "{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C2689CF1-B386-466C-B3CF-BAF3C1921EC0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
