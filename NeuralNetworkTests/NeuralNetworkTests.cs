@@ -10,12 +10,6 @@ namespace MachineLearning.Tests
     public class NeuralNetworkTests
     {
         [TestMethod()]
-        public void NeuralNetworkTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
         public void FeedForwardTest()
         {
             NeuralNetwork nn = new NeuralNetwork(new int[] { 2, 2, 1});
@@ -31,66 +25,6 @@ namespace MachineLearning.Tests
             {
                 Assert.Fail();
             }
-        }
-
-        [TestMethod()]
-        public void TrainEpochTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void TrainTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void CalculateErrorTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void SumTotalErrorTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void CalculateOutputLayerWeightErrorsTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void Calculate_dZdWTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void Calculate_dAdZTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void Calculate_dCdATest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void ActivationFunctionTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void ActivationFunctionDerivativeTest()
-        {
-            Assert.Fail();
         }
     }
 }
