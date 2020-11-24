@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30406.217
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MachineLearning", "MachineLearning\MachineLearning.csproj", "{173BB49D-96AD-4EAB-8F19-C7C320F98232}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Linear Algebra", "Linear Algebra\Linear Algebra.csproj", "{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuralNetworkTests", "NeuralNetworkTests\NeuralNetworkTests.csproj", "{B40FE3EE-B5AD-4752-B176-5846D26C1B5B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{173BB49D-96AD-4EAB-8F19-C7C320F98232}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{173BB49D-96AD-4EAB-8F19-C7C320F98232}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{173BB49D-96AD-4EAB-8F19-C7C320F98232}.Release|Any CPU.Build.0 = Release|Any CPU
-		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{44D925B7-5EC6-4577-AE3D-B25F9BF287ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B40FE3EE-B5AD-4752-B176-5846D26C1B5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B40FE3EE-B5AD-4752-B176-5846D26C1B5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B40FE3EE-B5AD-4752-B176-5846D26C1B5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B40FE3EE-B5AD-4752-B176-5846D26C1B5B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

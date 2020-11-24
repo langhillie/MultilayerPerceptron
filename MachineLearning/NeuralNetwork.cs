@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MachineLearning
 {
-    class NeuralNetwork
+    public class NeuralNetwork
     {
         public int[] layers;
         public double[][] neurons;
