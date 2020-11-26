@@ -39,19 +39,11 @@ namespace MachineLearning
             };
             TestData(trainingData, trainingLabels);
 
-            //WriteWeights();
-            for (int j = 0; j < 50; j++)
+            for (int j = 0; j < 200; j++)
             {
-                for (int i = 0; i < 4; i++)
-                {
-                    neuralnetwork.TrainEpoch(trainingData[i], trainingLabels[i]);
-                }
+                neuralnetwork.TrainEpoch(trainingData[j % 4], trainingLabels[j % 4]);
             }
-            Console.WriteLine();
-            neuralnetwork.TrainEpoch(trainingData[1], trainingLabels[1]);
-            Console.WriteLine();
-            neuralnetwork.TrainEpoch(trainingData[3], trainingLabels[3]);
-
+            
             TestOne(trainingData[0], trainingLabels[0]);
             TestOne(trainingData[1], trainingLabels[1]);
             TestOne(trainingData[2], trainingLabels[2]);
@@ -163,12 +155,11 @@ namespace MachineLearning
         }
         static void TestOne(double[] data, double[] label)
         {
-            Console.WriteLine("TESTING");
             //DrawNumber(data);
             double[] output = neuralnetwork.FeedForward(data);
             for (int i = 0; i < label.Length; i++)
             {
-                Console.WriteLine("Expected: {0} Actual: {1:0.000000}", label[i], output[i]);
+                Console.WriteLine("TEST - Expected: {0} Actual: {1:0.000000}", label[i], output[i]);
             }
         }
         static void TestData(double[][] TestData, double[][] TestLabels)
@@ -178,7 +169,7 @@ namespace MachineLearning
             {
                 double[] outputs = neuralnetwork.FeedForward(TestData[i]);
                 double[] errors = neuralnetwork.CalculateError(outputs, TestLabels[i]);
-                ErrorSum += neuralnetwork.SumTotalError(errors);
+                ErrorSum += neuralnetwork.CalculateMeanSquaredError(errors);
             }
             ErrorSum /= TestData.GetLength(0);
             Console.WriteLine("Average error: {0:0.000}",ErrorSum);

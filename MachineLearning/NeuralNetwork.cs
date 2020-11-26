@@ -14,8 +14,10 @@ namespace MachineLearning
         private readonly double learningRate = 0.5;
 
         private double[][] error;
-        public NeuralNetwork(int[] layerDimensions)
+        public double MeanSquaredError;
+        public NeuralNetwork(int[] layerDimensions, double learningRate = 0.5)
         {
+            this.learningRate = learningRate;
             InitLayers(layerDimensions);
             InitNeurons();
             InitBiases();
@@ -23,7 +25,6 @@ namespace MachineLearning
             InitWeightAdjustments();
             InitDerivTable();
         }
-
         private void InitLayers(int[] layerDimensions)
         {
             layers = new int[layerDimensions.Length];
@@ -112,7 +113,7 @@ namespace MachineLearning
                 }
             }
         }
-        public double[] FeedForward(double[] input, bool debug = false)
+        public double[] FeedForward(double[] input)
         {
             // Setting first layer to input values
             neurons[0] = input;
@@ -143,6 +144,7 @@ namespace MachineLearning
         // Takes in an array of input arrays, and the corresponding desired output arrays for each input
         public void Train(double[][] inputs, double[][] desiredOutputs)
         {
+            //Console.WriteLine("TRAIN");
             double[] outputAverage = new double[neurons[layers.Length - 1].Length];
             double[] targetAverage = new double[neurons[layers.Length - 1].Length];
             double[] inputAverage = new double[inputs[0].Length];
@@ -154,6 +156,7 @@ namespace MachineLearning
                     inputAverage[j] += inputs[input][j];
                 }
                 double[] output = FeedForward(inputs[input]);
+                //Console.WriteLine("Input " + inputs[input][0] + " " + inputs[input][1] + " = " + output[0]);
                 for (int j = 0; j < output.Length; j++)
                 {
                     //Console.WriteLine("Output {0:0.000} desired {1}", output[j], desiredOutputs[input][j]);
@@ -166,6 +169,7 @@ namespace MachineLearning
             {
                 outputAverage[i] /= inputs.GetLength(0);
                 targetAverage[i] /= inputs.GetLength(0);
+                //Console.WriteLine("out avg: {0} target avg: {1}", outputAverage[i], targetAverage[i]);
             }
             for (int i = 0; i < inputAverage.Length; i++)
             {
@@ -185,13 +189,14 @@ namespace MachineLearning
             }
             return cost;
         }
-        public double SumTotalError(double[] errors)
+        public double CalculateMeanSquaredError(double[] errors)
         {
             double sum = 0;
             for (int i = 0; i < errors.Length; i++)
             {
                 sum += errors[i];
             }
+            sum /= errors.Length;
             return sum;
         }
         private double CostFunction(double GeneratedOutput, double TargetOutput)
@@ -200,12 +205,13 @@ namespace MachineLearning
         }
         private void Backpropagate(double[] GeneratedOutput, double[] TargetOutput)
         {
-            //Console.WriteLine("Total Error: " + totalError);
-            
+            double[] errors = CalculateError(GeneratedOutput, TargetOutput);
+            MeanSquaredError = CalculateMeanSquaredError(errors);
+            //Console.WriteLine("MSE: {0:0.0000}",MeanSquaredError);
+
             CalculateOutputLayerWeightErrors(GeneratedOutput, TargetOutput);
             CalculateHiddenLayerWeightErrors();
             UpdateWeights();
-            
         }
         public void CalculateOutputLayerWeightErrors(double[] GeneratedOutput, double[] TargetOutput)
         {
