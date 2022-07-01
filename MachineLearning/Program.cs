@@ -11,8 +11,8 @@ namespace MachineLearning
 
         static void Main(string[] args)
         {
-            //RunNumberRecognition();
-            testXor();
+            RunNumberRecognition();
+            //testXor();
             //testSingleLayer();
         }
         static void testXor()
@@ -20,7 +20,7 @@ namespace MachineLearning
             outputLayerSize = 1;
             int[] layerDimensions = new int[] { 2, 3, outputLayerSize };
             neuralnetwork = new NeuralNetwork(layerDimensions);
-            neuralnetwork.biases[1] = new double[] { 0, 0, 0 };
+            neuralnetwork.biases[1] = new double[] { 0, 0, 0, 0};
             neuralnetwork.biases[2] = new double[] { 0 };
 
             double[][] trainingData = new double[][]
@@ -120,13 +120,13 @@ namespace MachineLearning
             }
             Console.WriteLine();
 
-            int[] layerDimensions = new int[] { 784, 16, 16, outputLayerSize };
+            int[] layerDimensions = new int[] { 784, 128, outputLayerSize };
             neuralnetwork = new NeuralNetwork(layerDimensions);
 
             TestData(testData, testLabels);
             TestOne(testData[1], testLabels[1]);
 
-            for (int i = 0; i < trainingData.GetLength(0); i++)
+            for (int i = 0; i < 12000; i++)
             {
                 neuralnetwork.TrainEpoch(trainingData[i], trainingLabels[i]);
             }
