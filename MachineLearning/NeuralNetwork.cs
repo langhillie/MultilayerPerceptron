@@ -11,11 +11,14 @@ namespace MachineLearning
         public double[][] biases;    
         public double[][][] weights;
         public double[][][] gradient;
-        private readonly double learningRate = 0.5;
+        private readonly double learningRate;
 
         private double[][] error;
         public double MeanSquaredError;
-        public NeuralNetwork(int[] layerDimensions, double learningRate = 0.5)
+
+        private readonly Random _random = new Random();
+
+        public NeuralNetwork(int[] layerDimensions, double learningRate = 0.1)
         {
             this.learningRate = learningRate;
             InitLayers(layerDimensions);
@@ -48,7 +51,7 @@ namespace MachineLearning
                     //Console.WriteLine("Layer " + layer + " num weights = " + numNeuronsPrevLayer);
                     for (int weight = 0; weight < numNeuronsPrevLayer; weight++)
                     {
-                        weights[layer][neuron][weight] = rand.NextDouble() / (numNeuronsPrevLayer);
+                        weights[layer][neuron][weight] = GetSmallRandomNumber();
                         //Console.WriteLine("Layer " + layer + " " + weights[layer][neuron][weight]);
                     }
                 }
@@ -56,8 +59,6 @@ namespace MachineLearning
         }
         private void InitWeightAdjustments()
         {
-            // Randomizing weights
-            Random rand = new Random();
             gradient = new double[layers.Length][][];
 
             // First layer of weights is not needed, becuase the weights refer to the layer before.
@@ -70,12 +71,7 @@ namespace MachineLearning
                     // Number of weights for each neuron is equal to the number of neurons in the previous layer
                     int numNeuronsPrevLayer = neurons[layer - 1].Length;
                     //Console.WriteLine("Layer {0}, NumWeights {1}", layer, numNeuronsPrevLayer);
-                    gradient[layer][neuron] = new double[numNeuronsPrevLayer];
-
-                    for (int weight = 0; weight < numNeuronsPrevLayer; weight++)
-                    {
-                        gradient[layer][neuron][weight] = 2 * rand.NextDouble() - 1;
-                    }
+                    gradient[layer][neuron] = new double[numNeuronsPrevLayer+1];
                 }
             }
         }
@@ -97,20 +93,20 @@ namespace MachineLearning
                 biases[layer] = new double[neurons[layer].Length];
                 for (int neuron = 0; neuron < biases[layer].Length; neuron++)
                 {
-                    biases[layer][neuron] = rand.NextDouble() / neurons[layer - 1].Length;
+                    biases[layer][neuron] = GetSmallRandomNumber();
                 }
             }
         }
+
+        private double GetSmallRandomNumber() =>
+            (0.009 * _random.NextDouble() + 0.0001) * (_random.Next(2) == 0 ? -1 : 1);
+
         private void InitDerivTable()
         {
             error = new double[layers.Length][];
             for (int layer = 0; layer < layers.Length; layer++)
             {
-                error[layer] = new double[layers[layer]];
-                for (int neuron = 0; neuron < layers[layer]; neuron++)
-                {
-                    error[layer][neuron] = 0;
-                }
+                error[layer] = new double[layers[layer] + 1];
             }
         }
         public double[] FeedForward(double[] input)
@@ -144,7 +140,6 @@ namespace MachineLearning
         // Takes in an array of input arrays, and the corresponding desired output arrays for each input
         public void Train(double[][] inputs, double[][] desiredOutputs)
         {
-            //Console.WriteLine("TRAIN");
             double[] outputAverage = new double[neurons[layers.Length - 1].Length];
             double[] targetAverage = new double[neurons[layers.Length - 1].Length];
             double[] inputAverage = new double[inputs[0].Length];
@@ -155,12 +150,8 @@ namespace MachineLearning
                 {
                     inputAverage[j] += inputs[input][j];
                 }
-                double[] output = FeedForward(inputs[input]);
-                //Console.WriteLine("Input " + inputs[input][0] + " " + inputs[input][1] + " = " + output[0]);
-                for (int j = 0; j < output.Length; j++)
+                for (int j = 0; j < desiredOutputs[input].Length; j++)
                 {
-                    //Console.WriteLine("Output {0:0.000} desired {1}", output[j], desiredOutputs[input][j]);
-                    outputAverage[j] += output[j];
                     targetAverage[j] += desiredOutputs[input][j];
                 }
             }
@@ -169,14 +160,13 @@ namespace MachineLearning
             {
                 outputAverage[i] /= inputs.GetLength(0);
                 targetAverage[i] /= inputs.GetLength(0);
-                //Console.WriteLine("out avg: {0} target avg: {1}", outputAverage[i], targetAverage[i]);
             }
             for (int i = 0; i < inputAverage.Length; i++)
             {
                 inputAverage[i] /= inputs.GetLength(0);
             }
-            FeedForward(inputAverage);
 
+            outputAverage = FeedForward(inputAverage);
             Backpropagate(outputAverage, targetAverage);
         }
 
@@ -199,16 +189,12 @@ namespace MachineLearning
             sum /= errors.Length;
             return sum;
         }
-        private double CostFunction(double GeneratedOutput, double TargetOutput)
-        {
-            return Math.Pow(TargetOutput - GeneratedOutput, 2) / 2;
-        }
+
         private void Backpropagate(double[] GeneratedOutput, double[] TargetOutput)
         {
-            double[] errors = CalculateError(GeneratedOutput, TargetOutput);
-            MeanSquaredError = CalculateMeanSquaredError(errors);
-            //Console.WriteLine("MSE: {0:0.0000}",MeanSquaredError);
-
+            //double[] errors = CalculateError(GeneratedOutput, TargetOutput);
+            //MeanSquaredError = CalculateMeanSquaredError(errors);
+            
             CalculateOutputLayerWeightErrors(GeneratedOutput, TargetOutput);
             CalculateHiddenLayerWeightErrors();
             UpdateWeights();
@@ -219,12 +205,16 @@ namespace MachineLearning
             for (int neuron = 0; neuron < neurons[outputLayer].Length; neuron++)
             {
                 double dAdZ = ActivationFunctionDerivative(GeneratedOutput[neuron]);
-                double dCdA = CostFunctionDerivative(GeneratedOutput[neuron], TargetOutput[neuron]);
+                double dCdA = CostFunctionDerivative(GeneratedOutput[neuron], TargetOutput[neuron]); // y - y^
                 error[outputLayer][neuron] = dAdZ * dCdA;
                 for (int weight = 0; weight < weights[outputLayer][neuron].Length; weight++)
                 {
                     double dZdW = neurons[outputLayer - 1][weight];
-                    gradient[outputLayer][neuron][weight] = dZdW * error[outputLayer][neuron];
+                    gradient[outputLayer][neuron][weight] = dZdW * dAdZ * dCdA * learningRate;
+                }
+                {
+                    double dZdW = 1;  //biases[outputLayer][neuron];
+                    gradient[outputLayer][neuron][^1] = dZdW * error[outputLayer][neuron] * learningRate;
                 }
             }
         }
@@ -240,28 +230,29 @@ namespace MachineLearning
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
                         // Modify by Derivative of cost with respect to given weight
-                        double dZdW = Calculate_dZdW(layer, neuron, weight);
-                        gradient[layer][neuron][weight] = dZdW * error[layer][neuron];
+                        double dZdW = neurons[layer - 1][weight];
+                        gradient[layer][neuron][weight] = dZdW * error[layer][neuron] * learningRate;
+                    }
+                    {
+                        double dZdW = 1; // biases[layer][neuron]
+                        gradient[layer][neuron][^1] = dZdW * error[layer][neuron] * learningRate;
                     }
                 }
             }
         }
         private void UpdateWeights()
         {
-            for (int layer = 1; layer < layers.Length; layer++)
+            for (int layer = 1; layer < layers.Length; layer++) // should layers be starting at 1? why not start at the end
             {
                 for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
                 {
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
-                        weights[layer][neuron][weight] -= gradient[layer][neuron][weight] * learningRate;
+                        weights[layer][neuron][weight] += gradient[layer][neuron][weight];
                     }
+                    biases[layer][neuron] += gradient[layer][neuron][^1];
                 }
             }
-        }
-        public double Calculate_dZdW(int layer, int neuron, int weight)
-        {
-            return neurons[layer - 1][weight];
         }
         public double Calculate_dAdZ(int layer, int neuron)
         {
@@ -277,9 +268,13 @@ namespace MachineLearning
             }
             return dCdA;
         }
-        private double CostFunctionDerivative(double GeneratedOutput, double TargetOutput)
+        private double CostFunction(double prediction, double targetOutput)
         {
-            return -(TargetOutput - GeneratedOutput);
+            return Math.Pow(targetOutput - prediction, 2) / 2;
+        }
+        private double CostFunctionDerivative(double prediction, double targetOutput)
+        {
+            return targetOutput - prediction;
         }
         public double ActivationFunction(double x)
         {
@@ -289,6 +284,7 @@ namespace MachineLearning
         public double ActivationFunctionDerivative(double x)
         {
             //return x * (1 - x);
+            
             if (x > 0)
             {
                 return 1;

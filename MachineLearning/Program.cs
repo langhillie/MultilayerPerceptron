@@ -11,24 +11,77 @@ namespace MachineLearning
 
         static void Main(string[] args)
         {
-            RunNumberRecognition();
+            //RunNumberRecognition();
             //testXor();
             //testSingleLayer();
+            testNAND();
+        }
+        static void testNAND()
+        {
+            outputLayerSize = 1;
+            int[] layerDimensions = new int[] { 2, outputLayerSize };
+            neuralnetwork = new NeuralNetwork(layerDimensions, 0.02);
+
+            //neuralnetwork.weights[1][0][0] = 0.2;
+            //neuralnetwork.weights[1][0][1] = -0.5;
+            //neuralnetwork.biases[1][0] = 0.1;
+
+            var plt = new ScottPlot.Plot(400, 300);
+            plt.AddLine(neuralnetwork.weights[1][0][0] + neuralnetwork.weights[1][0][1], neuralnetwork.biases[1][0], (0, 1), System.Drawing.Color.Red);
+
+
+            double[][] trainingData = new double[][]
+            {
+                new double[] { 0, 0},
+                new double[] { 0, 1},
+                new double[] { 1, 0},
+                new double[] { 1, 1},
+            };
+            double[][] trainingLabels = new double[][]
+            {
+                new double[] { 1 },
+                new double[] { 1 },
+                new double[] { 1 },
+                new double[] { 0 }
+            };
+
+            Console.WriteLine($"W0 = {neuralnetwork.weights[1][0][0]}, W1 = {neuralnetwork.weights[1][0][1]}, B = {neuralnetwork.biases[1][0]}");
+
+            for (int j = 0; j < 2000; j++)
+            {
+                //Console.WriteLine($"Training {{{trainingData[j % 4][0]}, {trainingData[j % 4][1]}}} = {trainingLabels[j % 4][0]}");
+                neuralnetwork.TrainEpoch(trainingData[j % 4], trainingLabels[j % 4]);
+            }
+            
+
+            //Console.WriteLine($"W0 = {neuralnetwork.weights[1][0][0]}, W1 = {neuralnetwork.weights[1][0][1]}, B = {neuralnetwork.biases[1][0]}");
+            //neuralnetwork.TrainEpoch(new double[] { 0, 0 }, new double[] { 1 });
+            Console.WriteLine($"W0 = {neuralnetwork.weights[1][0][0]}, W1 = {neuralnetwork.weights[1][0][1]}, B = {neuralnetwork.biases[1][0]}");
+
+
+            plt.AddPoint(0, 0);
+            plt.AddPoint(0, 1);
+
+            plt.AddPoint(1, 0);
+            plt.AddPoint(1, 1);
+
+            plt.AddLine(neuralnetwork.weights[1][0][0] + neuralnetwork.weights[1][0][1], neuralnetwork.biases[1][0], (0, 1), System.Drawing.Color.Blue);
+            new ScottPlot.FormsPlotViewer(plt).ShowDialog();
+
+
         }
         static void testXor()
         {
             outputLayerSize = 1;
-            int[] layerDimensions = new int[] { 2, 3, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions);
-            neuralnetwork.biases[1] = new double[] { 0, 0, 0, 0};
-            neuralnetwork.biases[2] = new double[] { 0 };
+            int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
+            neuralnetwork = new NeuralNetwork(layerDimensions, 0.05);
 
             double[][] trainingData = new double[][]
             {
-                new double[] { 1, 1},
+                new double[] { 0, 0},
                 new double[] { 0, 1},
                 new double[] { 1, 0},
-                new double[] { 0, 0},
+                new double[] { 1, 1},
             };
             double[][] trainingLabels = new double[][]
             {
@@ -37,19 +90,40 @@ namespace MachineLearning
                 new double[] { 1 },
                 new double[] { 0 }
             };
-            TestData(trainingData, trainingLabels);
-
-            for (int j = 0; j < 200; j++)
-            {
-                neuralnetwork.TrainEpoch(trainingData[j % 4], trainingLabels[j % 4]);
-            }
             
             TestOne(trainingData[0], trainingLabels[0]);
             TestOne(trainingData[1], trainingLabels[1]);
             TestOne(trainingData[2], trainingLabels[2]);
             TestOne(trainingData[3], trainingLabels[3]);
+            
+            TestData(trainingData, trainingLabels);
+
+            for (int j = 0; j < 2000; j++)
+            {
+                //Console.WriteLine($"Training {{{trainingData[j % 4][0]}, {trainingData[j % 4][1]}}} = {trainingLabels[j % 4][0]}");
+                neuralnetwork.TrainEpoch(trainingData[j % 4], trainingLabels[j % 4]);
+            }
+            
+            
+            TestOne(trainingData[0], trainingLabels[0]);
+            TestOne(trainingData[1], trainingLabels[1]);
+            TestOne(trainingData[2], trainingLabels[2]);
+            TestOne(trainingData[3], trainingLabels[3]);
+            
 
             TestData(trainingData, trainingLabels);
+
+
+            var plt = new ScottPlot.Plot(400, 300);
+            plt.AddPoint(0, 0);
+            plt.AddPoint(0, 1);
+
+            plt.AddPoint(1, 0);
+            plt.AddPoint(1, 1);
+
+            plt.AddLine(neuralnetwork.weights[1][0][0] + neuralnetwork.weights[1][0][1], neuralnetwork.biases[1][0], (0, 1), System.Drawing.Color.Blue);
+            plt.AddLine(neuralnetwork.weights[1][1][0] + neuralnetwork.weights[1][1][1], neuralnetwork.biases[1][1], (0, 1), System.Drawing.Color.Red);
+            new ScottPlot.FormsPlotViewer(plt).ShowDialog(); 
         }
         static void testSingleLayer()
         {
@@ -120,7 +194,7 @@ namespace MachineLearning
             }
             Console.WriteLine();
 
-            int[] layerDimensions = new int[] { 784, 128, outputLayerSize };
+            int[] layerDimensions = new int[] { 784, 32, outputLayerSize };
             neuralnetwork = new NeuralNetwork(layerDimensions);
 
             TestData(testData, testLabels);
@@ -167,6 +241,8 @@ namespace MachineLearning
             double ErrorSum = 0;
             for (int i = 0; i < TestData.GetLength(0); i++)
             {
+                //Console.WriteLine($"Test {i} - Expected: {outputVectorToDigit(TestLabels[i])}");
+                //DrawNumber(TestData[i]);
                 double[] outputs = neuralnetwork.FeedForward(TestData[i]);
                 double[] errors = neuralnetwork.CalculateError(outputs, TestLabels[i]);
                 ErrorSum += neuralnetwork.CalculateMeanSquaredError(errors);
@@ -309,6 +385,21 @@ namespace MachineLearning
                 }
                 return labels;
             }
+        }
+
+        private static int outputVectorToDigit(double[] outputVector)
+        {
+            int j = -1;
+            double highest = -1;
+            for (int i = 0; i < outputVector.Length; i++)
+            {
+                if (outputVector[i] > highest)
+                {
+                    highest = outputVector[i];
+                    j = i;
+                }
+            }
+            return j;
         }
     }
 }

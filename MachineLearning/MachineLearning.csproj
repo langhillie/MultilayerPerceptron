@@ -6,6 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ScottPlot" Version="4.1.51" />
+    <PackageReference Include="ScottPlot.WinForms" Version="4.1.51" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="data\t10k-images.idx3-ubyte">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
