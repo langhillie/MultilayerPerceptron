@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 
 namespace MachineLearning
 {
@@ -12,9 +13,8 @@ namespace MachineLearning
         static void Main(string[] args)
         {
             //RunNumberRecognition();
-            //testXor();
-            //testSingleLayer();
-            testNAND();
+            testXor();
+            //testNAND();
         }
         static void testNAND()
         {
@@ -50,7 +50,7 @@ namespace MachineLearning
             for (int j = 0; j < 2000; j++)
             {
                 //Console.WriteLine($"Training {{{trainingData[j % 4][0]}, {trainingData[j % 4][1]}}} = {trainingLabels[j % 4][0]}");
-                neuralnetwork.TrainEpoch(trainingData[j % 4], trainingLabels[j % 4]);
+                neuralnetwork.Train(trainingData[j % 4], trainingLabels[j % 4]);
             }
             
 
@@ -67,51 +67,41 @@ namespace MachineLearning
 
             plt.AddLine(neuralnetwork.weights[1][0][0] + neuralnetwork.weights[1][0][1], neuralnetwork.biases[1][0], (0, 1), System.Drawing.Color.Blue);
             new ScottPlot.FormsPlotViewer(plt).ShowDialog();
-
-
         }
         static void testXor()
         {
+            int totalSamples = 2000;
             outputLayerSize = 1;
             int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
             neuralnetwork = new NeuralNetwork(layerDimensions, 0.05);
 
-            double[][] trainingData = new double[][]
-            {
-                new double[] { 0, 0},
-                new double[] { 0, 1},
-                new double[] { 1, 0},
-                new double[] { 1, 1},
-            };
-            double[][] trainingLabels = new double[][]
-            {
-                new double[] { 0 },
-                new double[] { 1 },
-                new double[] { 1 },
-                new double[] { 0 }
-            };
-            
-            TestOne(trainingData[0], trainingLabels[0]);
-            TestOne(trainingData[1], trainingLabels[1]);
-            TestOne(trainingData[2], trainingLabels[2]);
-            TestOne(trainingData[3], trainingLabels[3]);
-            
-            TestData(trainingData, trainingLabels);
+            var random = new Random();
+            var data = (
+                from i in Enumerable.Range(0, totalSamples)
+                let input1 = random.Next(2)
+                let input2 = random.Next(2)
+                select new
+                {
+                    input1,
+                    input2,
+                    DesiredOutput = input1 == input2 ? 0 : 1
 
-            for (int j = 0; j < 2000; j++)
+                }
+                ).ToArray();
+
+            int trainingCount = totalSamples * 8 / 10;
+            var trainingSet = data.Take(trainingCount);
+            var testingSet = data.Skip(trainingCount);
+
+
+            TestData(testingSet.Select(x => new double[] { x.input1, x.input2 }).ToArray(), testingSet.Select(x => new double[] { x.DesiredOutput }).ToArray());
+
+            foreach (var epoch in trainingSet)
             {
-                //Console.WriteLine($"Training {{{trainingData[j % 4][0]}, {trainingData[j % 4][1]}}} = {trainingLabels[j % 4][0]}");
-                neuralnetwork.TrainEpoch(trainingData[j % 4], trainingLabels[j % 4]);
+                neuralnetwork.Train(new double[] { epoch.input1, epoch.input2}, new double[] { epoch.DesiredOutput });
             }
-            
-            
-            TestOne(trainingData[0], trainingLabels[0]);
-            TestOne(trainingData[1], trainingLabels[1]);
-            TestOne(trainingData[2], trainingLabels[2]);
-            TestOne(trainingData[3], trainingLabels[3]);
-            
 
-            TestData(trainingData, trainingLabels);
+            TestData(testingSet.Select(x => new double[] { x.input1, x.input2 }).ToArray(), testingSet.Select(x => new double[] { x.DesiredOutput }).ToArray());
 
 
             var plt = new ScottPlot.Plot(400, 300);
@@ -123,47 +113,12 @@ namespace MachineLearning
 
             plt.AddLine(neuralnetwork.weights[1][0][0] + neuralnetwork.weights[1][0][1], neuralnetwork.biases[1][0], (0, 1), System.Drawing.Color.Blue);
             plt.AddLine(neuralnetwork.weights[1][1][0] + neuralnetwork.weights[1][1][1], neuralnetwork.biases[1][1], (0, 1), System.Drawing.Color.Red);
+            Console.WriteLine($"x({Math.Round(neuralnetwork.weights[1][0][0], 3)} + {Math.Round(neuralnetwork.weights[1][0][1], 3)}) + {Math.Round(neuralnetwork.biases[1][0], 3)}");
+            Console.WriteLine($"x({Math.Round(neuralnetwork.weights[1][1][0], 3)} + {Math.Round(neuralnetwork.weights[1][1][1], 3)}) + {Math.Round(neuralnetwork.biases[1][1], 3)}");
+
             new ScottPlot.FormsPlotViewer(plt).ShowDialog(); 
         }
-        static void testSingleLayer()
-        {
-            outputLayerSize = 1;
-            int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions);
-            neuralnetwork.biases[1][0] = 0;
-            neuralnetwork.biases[1][1] = 0;
-            neuralnetwork.biases[2][0] = 0;
-            neuralnetwork.biases[2][1] = 0;
 
-            double[][] trainingData = new double[][]
-            {
-                new double[] { 1, 1},
-                new double[] { 0, 1},
-                new double[] { 1, 1},
-                new double[] { 0, 0},
-            };
-            double[][] trainingLabels = new double[][]
-            {
-                new double[] { 1 },
-                new double[] { 0 },
-                new double[] { 1 },
-                new double[] { 0 }
-            };
-
-            for (int i = 0; i < 1000; i++)
-            {
-                neuralnetwork.TrainEpoch(trainingData[i % 4], trainingLabels[i % 4]);
-            }
-
-
-            neuralnetwork.TrainEpoch(trainingData[0], trainingLabels[0]);
-            Console.WriteLine();
-            neuralnetwork.TrainEpoch(trainingData[1], trainingLabels[1]);
-            Console.WriteLine();
-            neuralnetwork.TrainEpoch(trainingData[2], trainingLabels[2]);
-
-            WriteWeights();
-        }
         static void WriteWeightsTest()
         {
             for (int i = 1; i < 3; i++)
@@ -202,7 +157,7 @@ namespace MachineLearning
 
             for (int i = 0; i < 12000; i++)
             {
-                neuralnetwork.TrainEpoch(trainingData[i], trainingLabels[i]);
+                neuralnetwork.Train(trainingData[i], trainingLabels[i]);
             }
 
             TestData(testData, testLabels);

@@ -48,7 +48,7 @@ namespace MachineLearning.Tests
             double[] input = new double[] { 1, 0 };
             double[] expectedOutput = new double[] { 1 };
 
-         nn.TrainEpoch(input, expectedOutput);
+         nn.Train(input, expectedOutput);
 
             Assert.Equal(0.207, Math.Round(nn.weights[1][0][0], 3));
             Assert.Equal(-0.500, Math.Round(nn.weights[1][0][1], 3));
@@ -73,11 +73,19 @@ namespace MachineLearning.Tests
             double[] input = new double[] { 1, 1 };
             double[] targetOutput = new double[] { 0 };
 
-            nn.FeedForward(input);
-            nn.TrainEpoch(input, targetOutput);
+            nn.Train(input, targetOutput);
 
             Assert.Equal(-7, nn.weights[2][0][0]);
+            Assert.Equal(-1.25, nn.weights[2][0][1]);
+            Assert.Equal(-2.5, nn.biases[2][0]);
+
             Assert.Equal(-0.25, nn.weights[1][0][0]);
+            Assert.Equal(0.75, nn.weights[1][0][1]);
+            Assert.Equal(-17, nn.biases[1][0]);
+
+            Assert.Equal(1.75, nn.weights[1][1][0]);
+            Assert.Equal(2.75, nn.weights[1][0][1]);
+            Assert.Equal(-2.5, nn.biases[1][1]);
         }
     }
 }

@@ -6,6 +6,15 @@ namespace MachineLearning
 {
     public class NeuralNetwork
     {
+        public enum Activation
+        {
+            LeakyReLU,
+            Sigmoid,
+            None
+        };
+
+        public Activation activation = Activation.LeakyReLU;
+
         public int[] layers;
         public double[][] neurons;
         public double[][] biases;    
@@ -129,45 +138,10 @@ namespace MachineLearning
             }
             return neurons[neurons.Length - 1];
         }
-        public void TrainEpoch(double[] input, double[] desiredOutput)
+        public void Train(double[] input, double[] desiredOutput)
         {
-            double[][] inputs = new double[1][];
-            inputs[0] = input;
-            double[][] desiredOutputs = new double[1][];
-            desiredOutputs[0] = desiredOutput;
-            Train(inputs, desiredOutputs);
-        }
-        // Takes in an array of input arrays, and the corresponding desired output arrays for each input
-        public void Train(double[][] inputs, double[][] desiredOutputs)
-        {
-            double[] outputAverage = new double[neurons[layers.Length - 1].Length];
-            double[] targetAverage = new double[neurons[layers.Length - 1].Length];
-            double[] inputAverage = new double[inputs[0].Length];
-
-            for (int input = 0; input < inputs.GetLength(0); input++)
-            {
-                for (int j = 0; j < inputs[input].Length; j++)
-                {
-                    inputAverage[j] += inputs[input][j];
-                }
-                for (int j = 0; j < desiredOutputs[input].Length; j++)
-                {
-                    targetAverage[j] += desiredOutputs[input][j];
-                }
-            }
-
-            for (int i = 0; i < outputAverage.Length; i++)
-            {
-                outputAverage[i] /= inputs.GetLength(0);
-                targetAverage[i] /= inputs.GetLength(0);
-            }
-            for (int i = 0; i < inputAverage.Length; i++)
-            {
-                inputAverage[i] /= inputs.GetLength(0);
-            }
-
-            outputAverage = FeedForward(inputAverage);
-            Backpropagate(outputAverage, targetAverage);
+            double[] prediction = FeedForward(input);
+            Backpropagate(prediction, desiredOutput);
         }
 
         public double[] CalculateError(double[] feedForwardOutput, double[] desiredOutputs)
@@ -195,11 +169,11 @@ namespace MachineLearning
             //double[] errors = CalculateError(GeneratedOutput, TargetOutput);
             //MeanSquaredError = CalculateMeanSquaredError(errors);
             
-            CalculateOutputLayerWeightErrors(GeneratedOutput, TargetOutput);
-            CalculateHiddenLayerWeightErrors();
+            CalculateOutputLayerWeightGradient(GeneratedOutput, TargetOutput);
+            CalculateHiddenLayerWeightGradient();
             UpdateWeights();
         }
-        public void CalculateOutputLayerWeightErrors(double[] GeneratedOutput, double[] TargetOutput)
+        public void CalculateOutputLayerWeightGradient(double[] GeneratedOutput, double[] TargetOutput)
         {
             int outputLayer = layers.Length - 1;
             for (int neuron = 0; neuron < neurons[outputLayer].Length; neuron++)
@@ -218,7 +192,7 @@ namespace MachineLearning
                 }
             }
         }
-        private void CalculateHiddenLayerWeightErrors()
+        private void CalculateHiddenLayerWeightGradient()
         {
             for (int layer = layers.Length - 2; layer > 0; layer--)
             {
@@ -242,7 +216,7 @@ namespace MachineLearning
         }
         private void UpdateWeights()
         {
-            for (int layer = 1; layer < layers.Length; layer++) // should layers be starting at 1? why not start at the end
+            for (int layer = 1; layer < layers.Length; layer++)
             {
                 for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
                 {
@@ -278,20 +252,50 @@ namespace MachineLearning
         }
         public double ActivationFunction(double x)
         {
-            //return 1 / (1 + Math.Pow(Math.E, -x));
-            return Math.Max(0.01*x, x);
+            if (activation == Activation.LeakyReLU)
+            {
+                return Math.Max(0.01 * x, x);
+
+            }
+            else if (activation == Activation.Sigmoid)
+            {
+                return 1 / (1 + Math.Pow(Math.E, -x));
+            }
+            else if (activation == Activation.None)
+            {
+                return x;
+            }
+            else
+            {
+                Console.WriteLine("Not configured activation function");
+                return 1;
+            }
         }
         public double ActivationFunctionDerivative(double x)
         {
-            //return x * (1 - x);
-            
-            if (x > 0)
+            if (activation == Activation.LeakyReLU)
+            {
+                if (x > 0)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return 0.01;
+                }
+            }
+            else if (activation == Activation.Sigmoid)
+            {
+                return x * (1 - x);
+            }
+            else if (activation == Activation.None)
             {
                 return 1;
             }
             else
             {
-                return 0.01;
+                Console.WriteLine("Not configured activation function");
+                return 0;
             }
         }
     }
