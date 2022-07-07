@@ -45,7 +45,6 @@ namespace MachineLearning
         private void InitWeights()
         {
             // Randomizing weights
-            Random rand = new Random();
             weights = new double[layers.Length][][];
 
             // First layer of weights is not needed, becuase the weights refer to the layer before.
@@ -94,7 +93,6 @@ namespace MachineLearning
         }
         private void InitBiases()
         {
-            Random rand = new Random();
             biases = new double[layers.Length][];
             // Layer 0 would be biases for the input layer, which does not have biases
             for (int layer = 1; layer < layers.Length; layer++)
@@ -108,7 +106,7 @@ namespace MachineLearning
         }
 
         private double GetSmallRandomNumber() =>
-            (0.009 * _random.NextDouble() + 0.0001) * (_random.Next(2) == 0 ? -1 : 1);
+            (2.4999 * _random.NextDouble() + 0.0001) * (_random.Next(2) == 0 ? -1 : 1);
 
         private void InitDerivTable()
         {
@@ -118,6 +116,7 @@ namespace MachineLearning
                 error[layer] = new double[layers[layer] + 1];
             }
         }
+
         public double[] FeedForward(double[] input)
         {
             // Setting first layer to input values
@@ -130,7 +129,9 @@ namespace MachineLearning
                     double sum = 0;
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
-                        sum += neurons[layer - 1][weight] * weights[layer][neuron][weight];
+                        double weightValue = weights[layer][neuron][weight];
+                        double neuronValue = neurons[layer - 1][weight];
+                        sum += weightValue * neuronValue;
                     }
                     sum += biases[layer][neuron];
                     neurons[layer][neuron] = ActivationFunction(sum);
@@ -138,6 +139,7 @@ namespace MachineLearning
             }
             return neurons[neurons.Length - 1];
         }
+
         public void Train(double[] input, double[] desiredOutput)
         {
             double[] prediction = FeedForward(input);
@@ -166,8 +168,8 @@ namespace MachineLearning
 
         private void Backpropagate(double[] GeneratedOutput, double[] TargetOutput)
         {
-            //double[] errors = CalculateError(GeneratedOutput, TargetOutput);
-            //MeanSquaredError = CalculateMeanSquaredError(errors);
+            double[] errors = CalculateError(GeneratedOutput, TargetOutput);
+            MeanSquaredError = CalculateMeanSquaredError(errors);
             
             CalculateOutputLayerWeightGradient(GeneratedOutput, TargetOutput);
             CalculateHiddenLayerWeightGradient();
@@ -184,11 +186,11 @@ namespace MachineLearning
                 for (int weight = 0; weight < weights[outputLayer][neuron].Length; weight++)
                 {
                     double dZdW = neurons[outputLayer - 1][weight];
-                    gradient[outputLayer][neuron][weight] = dZdW * dAdZ * dCdA * learningRate;
+                    gradient[outputLayer][neuron][weight] = dCdA * dAdZ * dZdW;
                 }
                 {
-                    double dZdW = 1;  //biases[outputLayer][neuron];
-                    gradient[outputLayer][neuron][^1] = dZdW * error[outputLayer][neuron] * learningRate;
+                    double dZdW = 1;
+                    gradient[outputLayer][neuron][^1] = dCdA * dAdZ * dZdW;
                 }
             }
         }
@@ -198,18 +200,18 @@ namespace MachineLearning
             {
                 for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
                 {
-                    double dAdZ = ActivationFunctionDerivative(neurons[layer][neuron]);
                     double dCdA = Calculate_dCdA(layer, neuron);
+                    double dAdZ = ActivationFunctionDerivative(neurons[layer][neuron]);
                     error[layer][neuron] = dCdA * dAdZ;
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
                         // Modify by Derivative of cost with respect to given weight
                         double dZdW = neurons[layer - 1][weight];
-                        gradient[layer][neuron][weight] = dZdW * error[layer][neuron] * learningRate;
+                        gradient[layer][neuron][weight] = dCdA * dAdZ * dZdW;
                     }
                     {
-                        double dZdW = 1; // biases[layer][neuron]
-                        gradient[layer][neuron][^1] = dZdW * error[layer][neuron] * learningRate;
+                        double dZdW = 1;
+                        gradient[layer][neuron][^1] = dCdA * dAdZ * dZdW;
                     }
                 }
             }
@@ -222,15 +224,14 @@ namespace MachineLearning
                 {
                     for (int weight = 0; weight < weights[layer][neuron].Length; weight++)
                     {
-                        weights[layer][neuron][weight] += gradient[layer][neuron][weight];
+                        weights[layer][neuron][weight] -= gradient[layer][neuron][weight] * learningRate;
                     }
-                    biases[layer][neuron] += gradient[layer][neuron][^1];
+                    biases[layer][neuron] -= gradient[layer][neuron][^1] * learningRate;
                 }
             }
         }
         public double Calculate_dAdZ(int layer, int neuron)
         {
-            //Console.WriteLine("dOut/dNet = " + ActivationFunctionDerivative(neurons[layer][neuron]));
             return ActivationFunctionDerivative(neurons[layer][neuron]);
         }
         public double Calculate_dCdA(int layer, int neuron)
@@ -244,11 +245,12 @@ namespace MachineLearning
         }
         private double CostFunction(double prediction, double targetOutput)
         {
-            return Math.Pow(targetOutput - prediction, 2) / 2;
+            double delta = (targetOutput - prediction);
+            return delta * delta / 2;
         }
         private double CostFunctionDerivative(double prediction, double targetOutput)
         {
-            return targetOutput - prediction;
+            return -(targetOutput - prediction);
         }
         public double ActivationFunction(double x)
         {
@@ -259,7 +261,7 @@ namespace MachineLearning
             }
             else if (activation == Activation.Sigmoid)
             {
-                return 1 / (1 + Math.Pow(Math.E, -x));
+                return (1 / (1 + Math.Pow(Math.E, -x)));
             }
             else if (activation == Activation.None)
             {
