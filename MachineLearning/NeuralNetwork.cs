@@ -56,11 +56,9 @@ namespace MachineLearning
                     // Number of weights for each neuron is equal to the number of neurons in the previous layer
                     int numNeuronsPrevLayer = neurons[layer - 1].Length;
                     weights[layer][neuron] = new double[numNeuronsPrevLayer];
-                    //Console.WriteLine("Layer " + layer + " num weights = " + numNeuronsPrevLayer);
                     for (int weight = 0; weight < numNeuronsPrevLayer; weight++)
                     {
                         weights[layer][neuron][weight] = GetSmallRandomNumber();
-                        //Console.WriteLine("Layer " + layer + " " + weights[layer][neuron][weight]);
                     }
                 }
             }
@@ -75,10 +73,8 @@ namespace MachineLearning
                 gradient[layer] = new double[neurons[layer].Length][];
                 for (int neuron = 0; neuron < neurons[layer].Length; neuron++)
                 {
-                    //Console.WriteLine("New Neuron " + neuron);
                     // Number of weights for each neuron is equal to the number of neurons in the previous layer
                     int numNeuronsPrevLayer = neurons[layer - 1].Length;
-                    //Console.WriteLine("Layer {0}, NumWeights {1}", layer, numNeuronsPrevLayer);
                     gradient[layer][neuron] = new double[numNeuronsPrevLayer+1];
                 }
             }
