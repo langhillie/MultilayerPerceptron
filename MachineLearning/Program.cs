@@ -15,28 +15,9 @@ namespace MachineLearning
             //RunNumberRecognition();
             TestXor();
             //TestNAND();
-            //TempExample();
         }
 
-        private static void TempExample()
-        {
-            NeuralNetwork nn = new NeuralNetwork(new int[] { 2, 2, 2 }, 0.5);
-            double[] input = new double[] { 0.05, 0.10 };
-            double[] targetOutput = new double[] { 0.01, 0.99 };
-            nn.activation = NeuralNetwork.Activation.Sigmoid;
-
-            nn.weights[1][0] = new double[] { 0.15, 0.20 };
-            nn.weights[1][1] = new double[] { 0.25, 0.30 };
-            nn.biases[1] = new double[] { 0.35, 0.35 };
-            nn.weights[2][0] = new double[] { 0.40, 0.45 };
-            nn.weights[2][1] = new double[] { 0.50, 0.55 };
-            nn.biases[2] = new double[] { 0.60, 0.60 };
-
-            var output = nn.FeedForward(input);
-            Console.WriteLine($"output: {output[0]} {output[1]}");
-            nn.Train(input, targetOutput);
-        }
-
+        // Simple perceptron with no hidden layer
         static void TestNAND()
         {
             outputLayerSize = 1;
