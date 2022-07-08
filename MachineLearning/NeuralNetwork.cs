@@ -20,7 +20,7 @@ namespace MachineLearning
         public double[][] biases;    
         public double[][][] weights;
         public double[][][] gradient;
-        private readonly double learningRate;
+        public double learningRate;
 
         private double[][] error;
         public double MeanSquaredError;

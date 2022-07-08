@@ -15,7 +15,6 @@ namespace MachineLearning
             //RunNumberRecognition();
             TestXor();
             //TestNAND();
-
             //TempExample();
         }
 
@@ -95,7 +94,7 @@ namespace MachineLearning
             int totalSamples = 100000;
             outputLayerSize = 1;
             int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions, 0.05);
+            neuralnetwork = new NeuralNetwork(layerDimensions, 0.02);
 
             var random = new Random();
             var data = (
@@ -155,15 +154,28 @@ namespace MachineLearning
             }
             Console.WriteLine();
 
-            int[] layerDimensions = new int[] { 784, 32, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions);
+            int[] layerDimensions = new int[] { 784, 16, 16, outputLayerSize };
+            neuralnetwork = new NeuralNetwork(layerDimensions, 0.1);
+            neuralnetwork.activation = NeuralNetwork.Activation.Sigmoid;
 
             TestData(testData, testLabels);
             TestOne(testData[1], testLabels[1]);
 
-            for (int i = 0; i < 12000; i++)
+            double oldError = Double.MaxValue;
+            for (int j = 0; j < 200; j++)
             {
-                neuralnetwork.Train(trainingData[i], trainingLabels[i]);
+                for (int i = 0; i < 12000; i++)
+                {
+                    neuralnetwork.Train(trainingData[i], trainingLabels[i]);
+                }
+                Console.WriteLine($"Training run {j}, MSE = {neuralnetwork.MeanSquaredError}");
+
+                if (neuralnetwork.MeanSquaredError > oldError)
+                {
+                    neuralnetwork.learningRate *= 0.99;
+                    Console.WriteLine($"Lowering learning rate to {neuralnetwork.learningRate}");
+                }
+                oldError = neuralnetwork.MeanSquaredError;
             }
 
             TestData(testData, testLabels);
