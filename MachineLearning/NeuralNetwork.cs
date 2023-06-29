@@ -176,8 +176,8 @@ namespace MachineLearning
             int outputLayer = layers.Length - 1;
             for (int neuron = 0; neuron < neurons[outputLayer].Length; neuron++)
             {
-                double dAdZ = ActivationFunctionDerivative(GeneratedOutput[neuron]);
                 double dCdA = CostFunctionDerivative(GeneratedOutput[neuron], TargetOutput[neuron]); // y - y^
+                double dAdZ = ActivationFunctionDerivative(GeneratedOutput[neuron]);
                 error[outputLayer][neuron] = dAdZ * dCdA;
                 for (int weight = 0; weight < weights[outputLayer][neuron].Length; weight++)
                 {

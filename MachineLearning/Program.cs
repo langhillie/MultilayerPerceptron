@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -7,22 +8,38 @@ namespace MachineLearning
 {
     static class Program
     {
-        static int outputLayerSize;
-        static NeuralNetwork neuralnetwork;
-
-        static void Main()
+        static void Main(string[] args)
         {
-            //RunNumberRecognition();
-            TestXor();
-            //TestNAND();
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Specify a test to run.");
+                args = new string[1];
+                args[0] = Console.ReadLine();
+            }
+
+            switch (args[0])
+            {
+                case "xor":
+                    TestXor();
+                    break;
+                case "nand":
+                    TestNAND();
+                    break;
+                case "numbers":
+                    RunNumberRecognition();
+                    break;
+                default:
+                    Console.WriteLine("Unknown test.");
+                    break;
+            }
+            Console.ReadKey();
         }
 
-        // Simple perceptron with no hidden layer
         static void TestNAND()
         {
-            outputLayerSize = 1;
+            int outputLayerSize = 1;
             int[] layerDimensions = new int[] { 2, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions, 0.02);
+            NeuralNetwork neuralnetwork = new NeuralNetwork(layerDimensions, 0.02);
 
             //neuralnetwork.weights[1][0][0] = 0.2;
             //neuralnetwork.weights[1][0][1] = -0.5;
@@ -70,12 +87,13 @@ namespace MachineLearning
             plt.AddLine((double)neuralnetwork.weights[1][0][0] + (double)neuralnetwork.weights[1][0][1], (double)neuralnetwork.biases[1][0], (0, 1), System.Drawing.Color.Blue);
             new ScottPlot.FormsPlotViewer(plt).ShowDialog();
         }
+
         static void TestXor()
         {
             int totalSamples = 100000;
-            outputLayerSize = 1;
-            int[] layerDimensions = new int[] { 2, 2, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions, 0.02);
+            int outputLayerSize = 1;
+            int[] layerDimensions = new int[] { 2, 4, outputLayerSize };
+            NeuralNetwork neuralnetwork = new NeuralNetwork(layerDimensions, 0.05);
 
             var random = new Random();
             var data = (
@@ -96,7 +114,7 @@ namespace MachineLearning
             var testingSet = data.Skip(trainingCount);
 
 
-            TestData(testingSet.Select(x => new double[] { x.input1, x.input2 }).ToArray(), testingSet.Select(x => new double[] { x.DesiredOutput }).ToArray());
+            TestData(testingSet.Select(x => new double[] { x.input1, x.input2 }).ToArray(), testingSet.Select(x => new double[] { x.DesiredOutput }).ToArray(), neuralnetwork);
 
             var plt = new ScottPlot.Plot(400, 300);
             int j = 0;
@@ -109,41 +127,62 @@ namespace MachineLearning
                 lastmse = neuralnetwork.MeanSquaredError;
             }
 
-            TestData(testingSet.Select(x => new double[] { x.input1, x.input2 }).ToArray(), testingSet.Select(x => new double[] { x.DesiredOutput }).ToArray());
+            TestData(testingSet.Select(x => new double[] { x.input1, x.input2 }).ToArray(),
+                testingSet.Select(x => new double[] { x.DesiredOutput }).ToArray(), 
+                neuralnetwork);
 
-            TestOne(new double[] { 0, 0 }, new double[] { 0 });
-            TestOne(new double[] { 0, 1 }, new double[] { 1 });
-            TestOne(new double[] { 1, 0 }, new double[] { 1 });
-            TestOne(new double[] { 1, 1 }, new double[] { 0 });
+            TestOne(new double[] { 0, 0 }, new double[] { 0 }, neuralnetwork);
+            TestOne(new double[] { 0, 1 }, new double[] { 1 }, neuralnetwork);
+            TestOne(new double[] { 1, 0 }, new double[] { 1 }, neuralnetwork);
+            TestOne(new double[] { 1, 1 }, new double[] { 0 }, neuralnetwork);
 
             new ScottPlot.FormsPlotViewer(plt).ShowDialog(); 
         }
 
-        private static void RunNumberRecognition()
+        private static void RenderGraph(double[] mse)
         {
-            outputLayerSize = 10;
+            var plt = new ScottPlot.Plot(400, 300);
 
-            double[][] trainingLabels = LoadLabelsFromIDXFile("train-labels.idx1-ubyte");
-            double[][] trainingData = LoadDataFromIDXFile("train-images.idx3-ubyte");
-
-            double[][] testLabels = LoadLabelsFromIDXFile("t10k-labels.idx1-ubyte");
-            double[][] testData = LoadDataFromIDXFile("t10k-images.idx3-ubyte");
-
-            for (int i = 0; i < 10; i++)
+            for (int i = 1; i < mse.Length; i++)
             {
-                Console.Write(testLabels[0][i]);
+                plt.AddLine(i - 1, mse[i-1], i, mse[i], System.Drawing.Color.Blue);
+            }
+
+            new ScottPlot.FormsPlotViewer(plt).ShowDialog();
+        }
+
+        private static void WriteDataToConsole(double[] data)
+        {
+            for (int i = 0; i < data.Length; i++)
+            {
+                Console.Write(data[i]);
             }
             Console.WriteLine();
+        }
 
-            int[] layerDimensions = new int[] { 784, 16, 16, outputLayerSize };
-            neuralnetwork = new NeuralNetwork(layerDimensions, 0.1);
+        private static void RunNumberRecognition()
+        {
+            int outputLayerSize = 10;
+            double learningRate = 0.05;
+
+            double[][] trainingLabels = LoadLabelsFromIDXFile("train-labels.idx1-ubyte", outputLayerSize);
+            double[][] trainingData = LoadDataFromIDXFile("train-images.idx3-ubyte");
+
+            double[][] testLabels = LoadLabelsFromIDXFile("t10k-labels.idx1-ubyte", outputLayerSize);
+            double[][] testData = LoadDataFromIDXFile("t10k-images.idx3-ubyte");
+
+            WriteDataToConsole(testLabels[0]);
+
+            int[] layerDimensions = new int[] { 784, 32, 24, outputLayerSize };
+            NeuralNetwork neuralnetwork = new NeuralNetwork(layerDimensions, learningRate);
             neuralnetwork.activation = NeuralNetwork.Activation.Sigmoid;
 
-            TestData(testData, testLabels);
-            TestOne(testData[1], testLabels[1]);
+            TestData(testData, testLabels, neuralnetwork);
+            TestOne(testData[1], testLabels[1], neuralnetwork);
 
-            double oldError = Double.MaxValue;
-            for (int j = 0; j < 200; j++)
+            int epochs = 50;
+            double[] error = new double[epochs];
+            for (int j = 0; j < epochs; j++)
             {
                 for (int i = 0; i < 12000; i++)
                 {
@@ -151,20 +190,22 @@ namespace MachineLearning
                 }
                 Console.WriteLine($"Training run {j}, MSE = {neuralnetwork.MeanSquaredError}");
 
-                if (neuralnetwork.MeanSquaredError > oldError)
+                if (j > 0 && neuralnetwork.MeanSquaredError > error[j-1])
                 {
                     neuralnetwork.learningRate *= 0.99;
                     Console.WriteLine($"Lowering learning rate to {neuralnetwork.learningRate}");
                 }
-                oldError = neuralnetwork.MeanSquaredError;
+                error[j] = neuralnetwork.MeanSquaredError;
             }
 
-            TestData(testData, testLabels);
+            TestData(testData, testLabels, neuralnetwork);
 
-            TestOne(testData[1], testLabels[1]);
+            TestOne(testData[1], testLabels[1], neuralnetwork);
+
+            RenderGraph(error);
         }
 
-        static void TestOne(double[] data, double[] label)
+        static void TestOne(double[] data, double[] label, NeuralNetwork neuralnetwork)
         {
             //DrawNumber(data);
             double[] output = neuralnetwork.FeedForward(data);
@@ -173,7 +214,7 @@ namespace MachineLearning
                 Console.WriteLine("TEST - Expected: {0} Actual: {1:0.000000}", label[i], output[i]);
             }
         }
-        static void TestData(double[][] TestData, double[][] TestLabels)
+        static void TestData(double[][] TestData, double[][] TestLabels, NeuralNetwork neuralnetwork)
         {
             double ErrorSum = 0;
             for (int i = 0; i < TestData.GetLength(0); i++)
@@ -195,7 +236,7 @@ namespace MachineLearning
                 Array.Reverse(bytes);
             return BitConverter.ToInt32(bytes, 0);
         }
-        public static double[] ToDoubleArray(byte ExpectedOutput)
+        public static double[] ToDoubleArray(byte ExpectedOutput, int outputLayerSize)
         {
             double[] OutputArray = new double[outputLayerSize];
 
@@ -262,7 +303,7 @@ namespace MachineLearning
                 Console.WriteLine();
             }
         }
-        public static double[][] LoadLabelsFromIDXFile(string fileName)
+        public static double[][] LoadLabelsFromIDXFile(string fileName, int outputLayerSize)
         {
             string path = @"data\" + fileName;
             if (!File.Exists(path))
